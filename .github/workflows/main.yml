@@ -10,7 +10,7 @@ env:
 
 jobs:
   run:
-    runs-on: [self-hosted, linux, arm64]
+    runs-on: self-hosted
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
