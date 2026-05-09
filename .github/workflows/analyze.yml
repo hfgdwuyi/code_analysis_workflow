@@ -1,0 +1,48 @@
+name: Code Analysis
+
+on:
+  workflow_dispatch:
+    inputs:
+      ollama_host:
+        description: Ollama server address
+        required: false
+        default: http://localhost:11434
+      model:
+        description: Model to use
+        required: false
+        default: deepseek-coder:6.7b
+  schedule:
+    - cron: 0 2 * * *
+
+jobs:
+  analyze:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+
+      - run: pip install -q requests
+
+      - env:
+          OLLAMA_HOST: "${{ github.event.inputs.ollama_host || 'http://localhost:11434' }}"
+          MODEL: "${{ github.event.inputs.model || 'deepseek-coder:6.7b' }}"
+        run: python3 analyze.py --host "$OLLAMA_HOST" --model "$MODEL"
+
+      - uses: actions/upload-artifact@v3
+        if: always()
+        with:
+          name: analysis-results
+          path: analysis-*.{json,md}
+          retention-days: 30
+
+      - if: github.event_name == 'workflow_dispatch' && always()
+        run: |
+          echo "## Code Analysis Results" >> $GITHUB_STEP_SUMMARY
+          if [ -f analysis-report.md ]; then
+            echo "✅ Completed" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "⚠️ Failed" >> $GITHUB_STEP_SUMMARY
+          fi
