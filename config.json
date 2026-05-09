@@ -1,0 +1,35 @@
+{
+  "ollama": {
+    "host": "http://localhost:11434",
+    "default_model": "deepseek-coder:6.7b",
+    "timeout": 120,
+    "temperature": 0.1
+  },
+  "analysis": {
+    "max_file_size": 50000,
+    "supported_extensions": [
+      ".py", ".js", ".ts", ".jsx", ".tsx",
+      ".java", ".cpp", ".c", ".go", ".rs",
+      ".php", ".rb", ".sh", ".yaml", ".yml",
+      ".json", ".xml", ".html", ".css", ".sql"
+    ],
+    "exclude_directories": [
+      ".git", ".github", "node_modules", "__pycache__",
+      ".venv", "venv", "dist", "build", ".pytest_cache"
+    ]
+  },
+  "output": {
+    "json_file": "analysis-results.json",
+    "report_file": "analysis-report.md"
+  },
+  "schedule": {
+    "description": "Cron expression for scheduled analysis",
+    "examples": {
+      "daily_2am_utc": "0 2 * * *",
+      "daily_9am_utc": "0 9 * * *",
+      "every_12_hours": "0 */12 * * *",
+      "every_monday_9am": "0 9 * * 1",
+      "every_morning": "0 6 * * *"
+    }
+  }
+}
