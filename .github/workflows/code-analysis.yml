@@ -4,72 +4,38 @@ on:
   workflow_dispatch:
     inputs:
       ollama_host:
-        description: 'Ollama server address (e.g., http://localhost:11434)'
+        description: 'Ollama server address'
         required: false
         default: 'http://localhost:11434'
       model:
-        description: 'Model to use (default: deepseek-coder:6.7b)'
+        description: 'Model to use'
         required: false
         default: 'deepseek-coder:6.7b'
   schedule:
-    - cron: '0 2 * * *'  # Daily at 2 AM UTC
+    - cron: '0 2 * * *'
 
 jobs:
   analyze-code:
     runs-on: ubuntu-latest
-    
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-      
+
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
           python-version: '3.11'
-      
+
       - name: Install dependencies
-        run: |
-          pip install -q requests
-      
-      - name: Test Ollama connection
+        run: pip install -q requests
+
+      - name: Run code analysis
         env:
           OLLAMA_HOST: ${{ github.event.inputs.ollama_host || 'http://localhost:11434' }}
           MODEL: ${{ github.event.inputs.model || 'deepseek-coder:6.7b' }}
-        run: |
-          python3 << 'EOF'
-          import requests
-          import os
-          import sys
-          
-          ollama_host = os.getenv('OLLAMA_HOST', 'http://localhost:11434')
-          model = os.getenv('MODEL', 'deepseek-coder:6.7b')
-          
-          try:
-              response = requests.get(f"{ollama_host}/api/tags", timeout=5)
-              if response.status_code == 200:
-                  print(f"✓ Connected to Ollama at {ollama_host}")
-                  models = response.json().get('models', [])
-                  model_names = [m['name'] for m in models]
-                  print(f"Available models: {model_names}")
-                  if any(model in name for name in model_names):
-                      print(f"✓ Model {model} is available")
-                  else:
-                      print(f"⚠ Model {model} not found. Available: {model_names}")
-              else:
-                  print(f"✗ Failed to connect: {response.status_code}")
-                  sys.exit(1)
-          except Exception as e:
-              print(f"✗ Error connecting to Ollama: {e}")
-              sys.exit(1)
-          EOF
-      
-      - name: Analyze code files
-        env:
-          OLLAMA_HOST: ${{ github.event.inputs.ollama_host || 'http://localhost:11434' }}
-          MODEL: ${{ github.event.inputs.model || 'deepseek-coder:6.7b' }}
-        run: python3 analyze.py --host $OLLAMA_HOST --model $MODEL
-      
-      - name: Upload analysis results
+        run: python3 analyze.py --host "$OLLAMA_HOST" --model "$MODEL"
+
+      - name: Upload results
         if: always()
         uses: actions/upload-artifact@v3
         with:
@@ -78,19 +44,15 @@ jobs:
             analysis-results.json
             analysis-report.md
           retention-days: 30
-      
-      - name: Comment on workflow
+
+      - name: Create summary
         if: github.event_name == 'workflow_dispatch' && always()
         run: |
-          echo "## Code Analysis Results" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "## Code Analysis Results" >> "$GITHUB_STEP_SUMMARY"
           if [ -f analysis-report.md ]; then
-            echo "✅ Analysis completed successfully!" >> $GITHUB_STEP_SUMMARY
-            echo "" >> $GITHUB_STEP_SUMMARY
-            echo "### Report Preview" >> $GITHUB_STEP_SUMMARY
-            head -50 analysis-report.md >> $GITHUB_STEP_SUMMARY
-            echo "" >> $GITHUB_STEP_SUMMARY
-            echo "📄 Full report available in Artifacts" >> $GITHUB_STEP_SUMMARY
+            echo "✅ Analysis completed!" >> "$GITHUB_STEP_SUMMARY"
+            echo "" >> "$GITHUB_STEP_SUMMARY"
+            head -50 analysis-report.md >> "$GITHUB_STEP_SUMMARY"
           else
-            echo "⚠️ Analysis could not be completed" >> $GITHUB_STEP_SUMMARY
+            echo "⚠️ Analysis could not complete" >> "$GITHUB_STEP_SUMMARY"
           fi
