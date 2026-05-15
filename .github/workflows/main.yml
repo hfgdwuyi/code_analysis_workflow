@@ -16,7 +16,7 @@ jobs:
           git clone --depth 1 https://github.com/hfgdwuyi/zephyr_epsu.git /tmp/zephyr_epsu
           python3 -m venv .venv
           .venv/bin/pip install requests
-      - run: .venv/bin/python analyze.py --target /tmp/zephyr_epsu
+      - run: .venv/bin/python analyze.py --target /tmp/zephyr_epsu --exclude-dir import
       - uses: actions/upload-artifact@v4
         if: always()
         with:

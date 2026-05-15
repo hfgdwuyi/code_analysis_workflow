@@ -25,10 +25,12 @@ CODE_EXTENSIONS = {
     '.conf': 'Config', '.overlay': 'Device Tree Overlay',
 }
 
-def scan_files(target='.'):
+def scan_files(target='.', extra_exclude=None):
     """Find all code files in repository."""
     files = []
     exclude = {'.git', '.github', 'node_modules', '__pycache__', '.venv', 'venv', 'dist', 'build', '.west'}
+    if extra_exclude:
+        exclude.update(extra_exclude)
 
     for root, dirs, filenames in os.walk(target):
         dirs[:] = [d for d in dirs if d not in exclude]
@@ -87,10 +89,11 @@ def main():
     parser.add_argument('--host', default='http://localhost:11434')
     parser.add_argument('--model', default='deepseek-coder:6.7b')
     parser.add_argument('--target', default='.')
+    parser.add_argument('--exclude-dir', action='append', default=[])
     args = parser.parse_args()
 
     target = os.path.abspath(args.target)
-    files = scan_files(target)
+    files = scan_files(target, args.exclude_dir)
     
     if not files:
         files = ['README.md', 'analyze.py', 'config.json']
