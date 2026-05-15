@@ -18,23 +18,24 @@ except ImportError:
 CODE_EXTENSIONS = {
     '.py': 'Python', '.js': 'JavaScript', '.ts': 'TypeScript',
     '.jsx': 'JSX', '.tsx': 'TSX', '.java': 'Java', '.cpp': 'C++',
-    '.c': 'C', '.go': 'Go', '.rs': 'Rust', '.php': 'PHP',
+    '.c': 'C', '.h': 'C/C++ Header', '.go': 'Go', '.rs': 'Rust', '.php': 'PHP',
     '.rb': 'Ruby', '.sh': 'Shell', '.yaml': 'YAML', '.yml': 'YAML',
     '.json': 'JSON', '.xml': 'XML', '.html': 'HTML', '.css': 'CSS',
-    '.sql': 'SQL',
+    '.sql': 'SQL', '.s': 'Assembly', '.ld': 'Linker Script',
+    '.conf': 'Config', '.overlay': 'Device Tree Overlay',
 }
 
-def scan_files():
+def scan_files(target='.'):
     """Find all code files in repository."""
     files = []
-    exclude = {'.git', '.github', 'node_modules', '__pycache__', '.venv', 'venv', 'dist', 'build'}
-    
-    for root, dirs, filenames in os.walk('.'):
+    exclude = {'.git', '.github', 'node_modules', '__pycache__', '.venv', 'venv', 'dist', 'build', '.west'}
+
+    for root, dirs, filenames in os.walk(target):
         dirs[:] = [d for d in dirs if d not in exclude]
         for f in filenames:
             if Path(f).suffix.lower() in CODE_EXTENSIONS:
                 files.append(os.path.join(root, f))
-    
+
     return sorted(files)
 
 def check_ollama(host: str) -> bool:
@@ -85,9 +86,11 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('--host', default='http://localhost:11434')
     parser.add_argument('--model', default='deepseek-coder:6.7b')
+    parser.add_argument('--target', default='.')
     args = parser.parse_args()
-    
-    files = scan_files()
+
+    target = os.path.abspath(args.target)
+    files = scan_files(target)
     
     if not files:
         files = ['README.md', 'analyze.py', 'config.json']
