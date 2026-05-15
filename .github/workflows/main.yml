@@ -12,6 +12,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - run: |
+          rm -rf /tmp/zephyr_epsu
           git clone --depth 1 https://github.com/hfgdwuyi/zephyr_epsu.git /tmp/zephyr_epsu
           python3 -m venv .venv
           .venv/bin/pip install requests
